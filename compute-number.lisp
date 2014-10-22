@@ -7,19 +7,38 @@
 ;; 1.先把1+2+3去掉+("123")，然后转换成list(#\1 #\2 #\3)，再转换成数字列表(1 2 3)
 ;; 2.套用a*8+b*2计算
 
-(defun compute (x y)
+;; 现在出现打分数据较少，就不减去最高最低的值了
+
+(defun compute-all (x y)
+  (compute x y t))
+
+(defun compute-sub-max-min (x y)
+  (compute x y))
+
+(defun compute (x y &OPTIONAL allp)
   (let ((ppx (preproccess x))
 	(ppy (preproccess y)))
     (+ (* 8
-	  (princ (n-sub-max-min-to-average ppx)))
+	  (number-seq-average ppx allp))
        (* 2
-	  (princ (n-sub-max-min-to-average ppy))))))
+	  (number-seq-average ppy allp)))))
+
+(defun number-seq-average (seq allp)
+  (print
+   (if allp
+       (all-number-seq-average seq)
+       (n-sub-max-min-to-average seq))))
 
 (defun n-sub-max-min-to-average (seq)
   (/ (- (reduce #'+ seq)
 	(reduce #'max seq)
 	(reduce #'min seq))
      (- (length seq) 2.0)))
+
+(defun all-number-seq-average (seq)
+  (float 
+   (/ (reduce #'+ seq)
+      (length seq))))
 
 (defun preproccess (x)
   (char-list->number-list
