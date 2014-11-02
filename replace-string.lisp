@@ -1,4 +1,4 @@
-;;;; 用来批量替换文件中的字符串  test
+;;;; 用来批量替换文件中的字符串
 
 ;; 应用场景：在看Android源码的时候，发现values-*/strings.xml有很多
 ;; <string name="account_phone" product="tablet">Tablet-only, unsynced</string>
