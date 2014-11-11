@@ -13,6 +13,8 @@
 ;; 含"product="字符串，如果有再查看product的值是否不为“default”，如果符合替换条件，在输出原本行的同时加上
 ;; 注释前后缀。
 
+;; (replace-strxml "/home/.../res/")
+
 (defun replace-strxml (dir-res)
   (dolist (filepath (find-files dir-res))
     (replace-string filepath "<!--" "-->")))
