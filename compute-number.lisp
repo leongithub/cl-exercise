@@ -1,19 +1,29 @@
-;; 需求：
-;; 由于公司网页表格里有很多这样的数据：1+2+3+2+4
-;; 最后要求去掉最大最小，然后算平均值，最后两个平均值按照a*8+b*2计算得除结果。
-;; 应该有的计算器会支持，但还是练习下cl吧:)
+;;;; 需求：
+;;;; 由于公司网页表格里有很多这样的数据：1+2+3+2+4
+;;;; 最后要求去掉最大最小，然后算平均值，最后两个平均值按照a*8+b*2计算得除结果。
+;;;; 应该有的计算器会支持，但还是练习下cl吧:)
 
-;; 解决步骤：
-;; 1.先把1+2+3去掉+("123")，然后转换成list(#\1 #\2 #\3)，再转换成数字列表(1 2 3)
-;; 2.套用a*8+b*2计算
+;;;; 解决大概步骤：
+;;;; 1.先把1+2+3去掉+("123")，然后转换成list(#\1 #\2 #\3)，再转换成数字列表(1 2 3)
+;;;; 2.套用a*8+b*2计算
+
 
 ;; 现在出现打分数据较少，就不减去最高最低的值了
+(defun compute-all ()
+  (read-data-for-compute t))
 
-(defun compute-all (x y)
-  (compute x y t))
+(defun compute-sub-max-min ()
+  (read-data-for-compute))
 
-(defun compute-sub-max-min (x y)
-  (compute x y))
+;; 循环读取用户输入的数据
+(defun read-data-for-compute (&OPTIONAL allp)
+  (labels ((prompt (x)
+	     (format t "~&please input ~A : " x)
+	     (string-trim '(#\Space #\Tab) (read-line))))
+    (let ((x (prompt "需求评分"))
+	  (y (prompt "风险评分")))
+      (print (compute x y allp))
+      (read-data-for-compute))))
 
 (defun compute (x y &OPTIONAL allp)
   (let ((ppx (preproccess x))
