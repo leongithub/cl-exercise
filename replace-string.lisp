@@ -24,7 +24,7 @@
 ;; 去除strings.xml注释
 (defun remove-comment-for-line (filepath)
   (labels ((need-modify-p (line)
-	   (let ((pos 0))
+	     (let ((pos 0))
 	       (and (setq pos (search "product=" line))
 		    (not (search "default" line
 				 :start2 (+ pos 9)
@@ -67,25 +67,25 @@
 		     post-str
 		     need-modify-p
 		     modify-string)
-    (with-open-file (in filepath
-			:direction :input
-			:if-does-not-exist nil)
-      (when in
-	(let ((temp-filename
-	       (make-pathname :name "temp-strings"
-			      :defaults filepath)))
-	  (with-open-file (out temp-filename
-			       :direction :output
-			       :if-exists :supersede)
-	    (do ((line (read-line in nil 'eof)
-		       (read-line in nil 'eof)))
-		((eql line 'eof))
-	      (format out "~A~%" 
-		      (if (funcall need-modify-p line)
-			  (funcall modify-string line pre-str post-str)
-			  line))))
-	  (delete-file in)
-	  (rename-file temp-filename filepath)))))
+  (with-open-file (in filepath
+		      :direction :input
+		      :if-does-not-exist nil)
+    (when in
+      (let ((temp-filename
+	     (make-pathname :name "temp-strings"
+			    :defaults filepath)))
+	(with-open-file (out temp-filename
+			     :direction :output
+			     :if-exists :supersede)
+	  (do ((line (read-line in nil 'eof)
+		     (read-line in nil 'eof)))
+	      ((eql line 'eof))
+	    (format out "~A~%" 
+		    (if (funcall need-modify-p line)
+			(funcall modify-string line pre-str post-str)
+			line))))
+	(delete-file in)
+	(rename-file temp-filename filepath)))))
 
 ;; 找出在res目录下的所有strings.xml文件，并循环应用到fn函数上
 (defun loop-strxml (dir-res fn)
