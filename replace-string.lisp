@@ -15,6 +15,10 @@
 
 ;; (add-comment-for-strxml "/home/.../res/")
 
+(defparameter *multi-line* nil)
+(defparameter *pre-str* "<!--")
+(defparameter *post-str* "-->")
+
 (defun add-comment-for-strxml (dir-res)
   (loop-strxml dir-res #'add-comment-for-line))
 
@@ -24,38 +28,63 @@
 ;; 去除strings.xml注释
 (defun remove-comment-for-line (filepath)
   (labels ((need-modify-p (line)
-	     (let ((pos 0))
-	       (and (setq pos (search "product=" line))
-		    (not (search "default" line
-				 :start2 (+ pos 9)
-				 :end2 (+ pos 16)))
-		    (search "<!--" line
-			    :end2 10))))
-	   (modify-line (line pre-str post-str)
-	     (subseq line
-		     (length pre-str)
-		     (search post-str line))))
+	     (or
+	      ; 符合修改条件
+	      (let ((pos 0))
+		(and (setq pos (search "product=" line))
+		     (not (search "default" line
+				  :start2 (+ pos 9)
+				  :end2 (+ pos 16)))
+		     (search *pre-str* line
+			     :end2 10)))
+	      ; 多行的<string></string>，并且为</string>
+	      (and *multi-line*
+		   (search "</string>" line :from-end t)
+		   (search *post-str* line :from-end t))))
+	   (modify-line (line)
+	     (if (search "</string>" line :from-end t)
+		 (subseq line
+			 (if *multi-line*
+			     (progn
+			       (setf *multi-line* nil)
+			       0)
+			     (length *pre-str*))
+			 (search *post-str* line))
+		 (progn
+		   (setf *multi-line* t)
+		   (subseq line (length *pre-str*))))))
     (replace-line filepath
-		  "<!--"
-		  "-->"
 		  #'need-modify-p
 		  #'modify-line)))
 
 ;; 给strings.xml加入注释
 (defun add-comment-for-line (filepath)
   (labels ((need-modify-p (line)
-	     (let ((pos 0))
-	       (and (setq pos (search "product=" line))
-		    (not (search "default" line
-				 :start2 (+ pos 9)
-				 :end2 (+ pos 16)))
-		    (not (search "<!--" line
-				 :end2 10)))))
-	   (modify-line (line pre-str post-str)
-	     (concatenate 'string pre-str line post-str)))	     
+	     (or
+	      ; 符合修改条件
+	      (let ((pos 0))
+		(and (setq pos (search "product=" line))
+		     (not (search "default" line
+				  :start2 (+ pos 9)
+				  :end2 (+ pos 16)))
+		     (not (search *pre-str* line
+				  :end2 10))))
+	      ; 多行的<string></string>，并且为</string>
+	      (and *multi-line*
+		   (search "</string>" line :from-end t)
+		   (not (search *post-str* line :from-end t)))))
+	   (modify-line (line)
+	     (if (search "</string>" line :from-end t)
+		 (concatenate 'string
+			      (if *multi-line*
+				  (setf *multi-line* nil)
+				  *pre-str*)
+			      line
+			      *post-str*)
+		 (progn
+		   (setf *multi-line* t)
+		   (concatenate 'string *pre-str* line)))))
     (replace-line filepath
-		  "<!--"
-		  "-->"
 		  #'need-modify-p
 		  #'modify-line)))
 
@@ -63,29 +92,27 @@
 ;; 如果是去掉注释就会出现输出比输入少，导致文件尾部会有多余字符
 ;; 现在采用输出新文件，再删除原有文件，最后重命名新文件为旧文件
 (defun replace-line (filepath
-		     pre-str
-		     post-str
 		     need-modify-p
 		     modify-string)
-  (with-open-file (in filepath
-		      :direction :input
-		      :if-does-not-exist nil)
-    (when in
-      (let ((temp-filename
-	     (make-pathname :name "temp-strings"
-			    :defaults filepath)))
-	(with-open-file (out temp-filename
-			     :direction :output
-			     :if-exists :supersede)
-	  (do ((line (read-line in nil 'eof)
-		     (read-line in nil 'eof)))
-	      ((eql line 'eof))
-	    (format out "~A~%" 
-		    (if (funcall need-modify-p line)
-			(funcall modify-string line pre-str post-str)
-			line))))
-	(delete-file in)
-	(rename-file temp-filename filepath)))))
+    (with-open-file (in filepath
+			:direction :input
+			:if-does-not-exist nil)
+      (when in
+	(let ((temp-filename
+	       (make-pathname :name "temp-strings"
+			      :defaults filepath)))
+	  (with-open-file (out temp-filename
+			       :direction :output
+			       :if-exists :supersede)
+	    (do ((line (read-line in nil 'eof)
+		       (read-line in nil 'eof)))
+		((eql line 'eof))
+	      (format out "~A~%" 
+		      (if (funcall need-modify-p line)
+			  (funcall modify-string line)
+			  line))))
+	  (delete-file in)
+	  (rename-file temp-filename filepath)))))
 
 ;; 找出在res目录下的所有strings.xml文件，并循环应用到fn函数上
 (defun loop-strxml (dir-res fn)
