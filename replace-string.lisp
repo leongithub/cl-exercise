@@ -52,10 +52,12 @@
 			 (search *post-str* line))
 		 (progn
 		   (setf *multi-line* t)
-		   (subseq line (length *pre-str*))))))
-    (replace-line filepath
-		  #'need-modify-p
-		  #'modify-line)))
+		   (subseq line (length *pre-str*)))))
+	   (handle-line (line)
+	     (if (need-modify-p line)
+		 (modify-line line)
+		 line)))
+    (replace-line filepath #'handle-line)))
 
 ;; 给strings.xml加入注释
 (defun add-comment-for-line (filepath)
@@ -83,17 +85,17 @@
 			      *post-str*)
 		 (progn
 		   (setf *multi-line* t)
-		   (concatenate 'string *pre-str* line)))))
-    (replace-line filepath
-		  #'need-modify-p
-		  #'modify-line)))
+		   (concatenate 'string *pre-str* line))))
+	   (handle-line (line)
+	     (if (need-modify-p line)
+		 (modify-line line)
+		 line)))
+    (replace-line filepath #'handle-line)))
 
 ;; 之前输出流用:if-exists :overwrite，
 ;; 如果是去掉注释就会出现输出比输入少，导致文件尾部会有多余字符
 ;; 现在采用输出新文件，再删除原有文件，最后重命名新文件为旧文件
-(defun replace-line (filepath
-		     need-modify-p
-		     modify-string)
+(defun replace-line (filepath handle-line)
     (with-open-file (in filepath
 			:direction :input
 			:if-does-not-exist nil)
@@ -107,10 +109,7 @@
 	    (do ((line (read-line in nil 'eof)
 		       (read-line in nil 'eof)))
 		((eql line 'eof))
-	      (format out "~A~%" 
-		      (if (funcall need-modify-p line)
-			  (funcall modify-string line)
-			  line))))
+	      (format out "~A~%" (funcall handle-line line))))
 	  (delete-file in)
 	  (rename-file temp-filename filepath)))))
 
