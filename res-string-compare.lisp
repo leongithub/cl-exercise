@@ -43,7 +43,7 @@
 		 (format out "~A: ~A~%" line-number line))
 	      (if (search name line2)
 		  (return))))))))
-	  
+
 
 (defun rtn-strings-xml (dir-res dir-values)
   (merge-pathnames (make-pathname :directory `(:relative ,dir-values)
