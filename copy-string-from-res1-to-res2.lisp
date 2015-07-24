@@ -14,8 +14,8 @@
 			  (enough-namestring filepath dir-res1)
 			  dir-res2)))
 	   (add-content-to-file out-path it)))))
-					   
-	 
+
+
 
 (defun add-content-to-file (filepath content)
   (with-open-file (in filepath
@@ -25,24 +25,24 @@
       (with-open-file (out filepath
 			   :direction :output
 			   :if-exists :overwrite)
-	    (do ((line (read-line in nil 'eof)
-		       (read-line in nil 'eof)))
-		((eql line 'eof))
-	      (if (search "</resources>" line)
-		  (format out "~A~%" content))
-	      (format out "~A~%" line))))))
+	(do ((line (read-line in nil 'eof)
+		   (read-line in nil 'eof)))
+	    ((eql line 'eof))
+	  (if (search "</resources>" line)
+	      (format out "~A~%" content))
+	  (format out "~A~%" line))))))
 
 (defun find-string-line (filepath)
   (with-open-file (in filepath
 		      :direction :input
 		      :if-does-not-exist nil)
     (if in
-      (do ((line (read-line in nil 'eof)
-		 (read-line in nil 'eof)))
-	  ((or
-	    (eql line 'eof)
-	    (search *search-string* line))
-	   (if (not (eql line 'eof)) line))))))
+	(do ((line (read-line in nil 'eof)
+		   (read-line in nil 'eof)))
+	    ((or
+	      (eql line 'eof)
+	      (search *search-string* line))
+	     (if (not (eql line 'eof)) line))))))
 
 ;; 从所给的res目录下找出所有strings.xml文件
 (defun find-strxml-files (dir-parent)
